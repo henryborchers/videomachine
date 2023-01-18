@@ -31,19 +31,16 @@ def main():
 
     #handling the input args. This is kind of a mess in this version
     if args.i is None:
-        print(bcolors.FAIL + "Please enter an input file!" + bcolors.ENDC)
+        print(f"{bcolors.FAIL}Please enter an input file!{bcolors.ENDC}")
         quit()
-    if args.m is None:
-        print(bcolors.OKGREEN + "Running in Simple Bash Cat mode" + bcolors.ENDC)
-        mode = 1
-    elif args.m == "1":
-        print(bcolors.OKGREEN + "Running in Simple Bash Cat mode" + bcolors.ENDC)
+    if args.m is None or args.m == "1":
+        print(f"{bcolors.OKGREEN}Running in Simple Bash Cat mode{bcolors.ENDC}")
         mode = 1
     elif args.m == "2":
-        print(bcolors.OKGREEN + "Running in FFmpeg Cat mode" + bcolors.ENDC)
+        print(f"{bcolors.OKGREEN}Running in FFmpeg Cat mode{bcolors.ENDC}")
         mode = 2
     else:
-        print(bcolors.FAIL + "Please select a valid mode (1 or 2)!" + bcolors.ENDC)
+        print(f"{bcolors.FAIL}Please select a valid mode (1 or 2)!{bcolors.ENDC}")
         quit()
     if args.f is None:
         output_format = "ProRes"
@@ -70,7 +67,7 @@ def main():
         transcode_string = " -movflags write_colr+faststart -color_primaries smpte170m -color_trc bt709 -colorspace smpte170m -color_range mpeg -vf 'setfield=bff,setdar=4/3' -c:v v210 -c:a pcm_s24l -ar 48000 "
         output_ext = ".mov"
     if args.o is None:
-        output_path = os.path.dirname(args.i) + "/"
+        output_path = f"{os.path.dirname(args.i)}/"
 
     if args.v:
         ffmpeg_command = "/usr/local/bin/ffmpeg "
@@ -91,19 +88,21 @@ def main():
             if cat_move_VOBS_to_local(args.i, mount_point, ffmpeg_command):
                 print("Finished moving VOBs to local directory and concatonating!")
                 #transcode vobs into the target format
-                print("Transcoding VOBS to %s..." % (output_format))
+                print(f"Transcoding VOBS to {output_format}...")
                 cat_transcode_VOBS(args.i, transcode_string, output_ext, ffmpeg_command)
-                print("Finished transcoding VOBS to %s!" % (output_format))
+                print(f"Finished transcoding VOBS to {output_format}!")
             else:
                 print("No VOBs found. Quitting!")
         elif mode == 2:
-            print("Transcoding VOBs to %s and moving to local directory..." % (output_format))
+            print(f"Transcoding VOBs to {output_format} and moving to local directory...")
             if ffmpeg_move_VOBS_to_local(args.i, mount_point, ffmpeg_command, transcode_string, output_ext):
-                print("Finished transcoding VOBs to %s and moving to local directory..." % (output_format))
+                print(
+                    f"Finished transcoding VOBs to {output_format} and moving to local directory..."
+                )
                 #concatenate vobs into a sungle file, format of the user's selection
-                print("Concatonating %s files..." % (output_format))
+                print(f"Concatonating {output_format} files...")
                 ffmpeg_concatenate_VOBS(args.i, transcode_string, output_ext, ffmpeg_command)
-                print("Finished concatonating %s files!" % (output_format))
+                print(f"Finished concatonating {output_format} files!")
             else:
                 print("No VOBs found. Quitting!")
 
@@ -120,9 +119,8 @@ def main():
 
         return
 
-    #If the user quits the script mid-processes the script cleans up after itself
     except KeyboardInterrupt:
-        print(bcolors.FAIL + "User has quit the script" + bcolors.ENDC)
+        print(f"{bcolors.FAIL}User has quit the script{bcolors.ENDC}")
         try:
             unmount_Image(mount_point)
             remove_temp_files(args.i)
@@ -138,27 +136,29 @@ def mount_Image(ISO_Path):
 
     ##figure out what the mountpoint will be
     while mount_point_exists:
-        mount_point = "ISO_Volume_" + str(mount_increment)
-        mount_point_exists = os.path.isdir("/Volumes/" + mount_point)
+        mount_point = f"ISO_Volume_{str(mount_increment)}"
+        mount_point_exists = os.path.isdir(f"/Volumes/{mount_point}")
         mount_increment = mount_increment + 1
 
     ##mount ISO
     try:
-        mount_point = "/Volumes/" + mount_point
-        mount_command = "hdiutil attach '" + ISO_Path + "' -mountpoint " + mount_point
+        mount_point = f"/Volumes/{mount_point}"
+        mount_command = f"hdiutil attach '{ISO_Path}' -mountpoint {mount_point}"
         os.mkdir(mount_point)
         hdiutil_return = run_command(mount_command)
         if hdiutil_return == 1:
-            print(bcolors.FAIL + "Mounting Failed. Quitting Script" + bcolors.ENDC)
+            print(f"{bcolors.FAIL}Mounting Failed. Quitting Script{bcolors.ENDC}")
             quit()
         return mount_point
     except PermissionError:
-        print(bcolors.FAIL + "Mounting failed due to permission error. Try running script in sudo mode" + bcolors.ENDC)
+        print(
+            f"{bcolors.FAIL}Mounting failed due to permission error. Try running script in sudo mode{bcolors.ENDC}"
+        )
         quit()
 
 
 def unmount_Image(mount_point):
-    unmount_command = "hdiutil detach '" + mount_point + "'"
+    unmount_command = f"hdiutil detach '{mount_point}'"
     run_command(unmount_command)
     ##os.remove(mount_point)     #thought we needed this but i guess not...
     return True
@@ -182,15 +182,14 @@ def cat_move_VOBS_to_local(first_file_path, mount_point, ffmpeg_command):
                 vobNum = vobNum.split(".")[0]
                 vobNumInt = int(vobNum)
                 discNumInt = int(discNum)
-                if discNumInt == lastDiscNum:
-                    if vobNumInt > 0:
-                        input_vobList.append(dirName + "/" + fname)
+                if discNumInt == lastDiscNum and vobNumInt > 0:
+                    input_vobList.append(f"{dirName}/{fname}")
                 if discNumInt > lastDiscNum:
                     input_vobList.sort()
                     input_discList.append(input_vobList)
                     input_vobList = []
                     if vobNumInt > 0:
-                        input_vobList.append(dirName + "/" + fname)
+                        input_vobList.append(f"{dirName}/{fname}")
                 lastDiscNum = discNumInt
 
 
@@ -202,37 +201,32 @@ def cat_move_VOBS_to_local(first_file_path, mount_point, ffmpeg_command):
         input_vobList.sort()
         input_discList.append(input_vobList)
 
-      ##this portion performs the copy of the VOBs to the local storage. They are moved using the cat bash command
-
     try:
         delset_path = os.path.dirname(first_file_path)
-        os.mkdir(first_file_path + ".VOBS/")
+        os.mkdir(f"{first_file_path}.VOBS/")
     except OSError:
         pass
 
 #       Creating the cat command here
 
     cat_command = ""
-    output_disc_count = 1
-    out_vob_path = first_file_path + ".VOBS/" + file_name_root
+    out_vob_path = f"{first_file_path}.VOBS/{file_name_root}"
 
     if len(input_discList) > 1:
 
-        for disc in input_discList:
+        for output_disc_count, disc in enumerate(input_discList, start=1):
             cat_command += "/bin/cat "
             for vob in disc:
-                cat_command += vob + " "
-            cat_command += "> '" + out_vob_path + "_" + str(output_disc_count) + ".vob' && "
-            output_disc_count += 1
-
+                cat_command += f"{vob} "
+            cat_command += f"> '{out_vob_path}_{str(output_disc_count)}.vob' && "
         cat_command = cat_command.strip(" &&")
 
     else:
         cat_command += "cat "
         for disc in input_discList:
             for vob in disc:
-                cat_command += vob + " "
-            cat_command += "> '" + out_vob_path + ".vob'"
+                cat_command += f"{vob} "
+            cat_command += f"> '{out_vob_path}.vob'"
 
     run_command(cat_command)
     return has_vobs
@@ -250,21 +244,19 @@ def ffmpeg_move_VOBS_to_local(first_file_path, mount_point, ffmpeg_command, tran
                 vobNum = vobNum.split(".")[0]
                 vobNum = int(vobNum)
                 if vobNum > 0:
-                	input_vobList.append(dirName + "/" + fname)
+                    input_vobList.append(f"{dirName}/{fname}")
 
     ##Returns False if there are no VOBs found, otherwise it moves on
-    if len(input_vobList) == 0:
+    if not input_vobList:
         has_vobs = False
     else:
         has_vobs = True
         input_vobList.sort()
 
 
-      ##this portion performs the copy of the VOBs to the SAN. They are concatenated after the copy so the streams are in the right order
-
     try:
         delset_path = os.path.dirname(first_file_path)
-        os.mkdir(first_file_path + ".VOBS/")
+        os.mkdir(f"{first_file_path}.VOBS/")
     except OSError:
         pass
 
@@ -273,81 +265,74 @@ def ffmpeg_move_VOBS_to_local(first_file_path, mount_point, ffmpeg_command, tran
     for v in input_vobList:
         v_name = v.split("/")[-1]
         v_name = v_name.replace('.VOB',output_ext)
-        out_vob_path = first_file_path + ".VOBS/" + v_name
+        out_vob_path = f"{first_file_path}.VOBS/{v_name}"
         #ffmpeg_vob_copy_string = ffmpeg_command + " -i " + v + " -map 0:v:0 -map 0:a:0 -f vob -b:v 9M -b:a 192k -y '" + out_vob_path + "'"        #original without more recent additions
         #ffmpeg_vob_copy_string = ffmpeg_command + " -i " + v + " -map 0:v:0 -map 0:a:0 -video_track_timescale 90000 -f vob -b:v 9M -b:a 192k -y '" + out_vob_path + "'"    #version with just tbs fix
         #ffmpeg_vob_copy_string = ffmpeg_command + " -i " + v + " -map 0:v:0 -map 0:a:0 -af apad -c:v copy -c:a ac3 -ar 48000 -shortest -avoid_negative_ts make_zero -fflags +genpts -f vob -b:v 9M -b:a 192k -y '" + out_vob_path + "'"    #version with only audio pad
-        ffmpeg_vob_copy_string = ffmpeg_command + " -i " + v + " -map 0:v:0 -map 0:a:0 -video_track_timescale 90000 -af apad -shortest -avoid_negative_ts make_zero -fflags +genpts -b:a 192k -y " + transcode_string + " '" + out_vob_path + "'"    #version with tbs fix and audio pad
+        ffmpeg_vob_copy_string = f"{ffmpeg_command} -i {v} -map 0:v:0 -map 0:a:0 -video_track_timescale 90000 -af apad -shortest -avoid_negative_ts make_zero -fflags +genpts -b:a 192k -y {transcode_string} '{out_vob_path}'"
         run_command(ffmpeg_vob_copy_string)
 
 
     ##see if mylist already exists, if so delete it.
     remove_cat_list(first_file_path)
 
-    #writing list of vobs to concat
-    f = open(first_file_path + ".mylist.txt", "w")
-    for v in input_vobList:
-        v_name = v.split("/")[-1]
-        v_name = v_name.replace('.VOB',output_ext)
-        out_vob_path = first_file_path + ".VOBS/" + v_name
-        f.write("file '" + out_vob_path + "'")
-        f.write("\n")
-    f.close()
-
+    with open(f"{first_file_path}.mylist.txt", "w") as f:
+        for v in input_vobList:
+            v_name = v.split("/")[-1]
+            v_name = v_name.replace('.VOB',output_ext)
+            out_vob_path = f"{first_file_path}.VOBS/{v_name}"
+            f.write(f"file '{out_vob_path}'")
+            f.write("\n")
     return has_vobs
 
 def cat_transcode_VOBS(first_file_path, transcode_string, output_ext, ffmpeg_command):
     extension = os.path.splitext(first_file_path)[1]
-    vob_folder_path = first_file_path + ".VOBS/"
-    vob_list = []
-    for v in os.listdir(vob_folder_path):
-        if not v.startswith('.'):
-            if v.endswith('.vob'):
-                vob_list.append(first_file_path + ".VOBS/" + v)
-
+    vob_folder_path = f"{first_file_path}.VOBS/"
+    vob_list = [
+        f"{first_file_path}.VOBS/{v}"
+        for v in os.listdir(vob_folder_path)
+        if not v.startswith('.') and v.endswith('.vob')
+    ]
     if len(vob_list) == 1:
         output_path = first_file_path.replace(extension,output_ext)
-        ffmpeg_vob_concat_string = ffmpeg_command + " -i '" + vob_list[0] + "' -dn -map 0:v:0 -map 0:a:0 " + transcode_string + " '" + output_path + "'"
+        ffmpeg_vob_concat_string = f"{ffmpeg_command} -i '{vob_list[0]}' -dn -map 0:v:0 -map 0:a:0 {transcode_string} '{output_path}'"
         run_command(ffmpeg_vob_concat_string)
     else:
-        inc = 1
-        for vob_path in vob_list:
+        for inc, vob_path in enumerate(vob_list, start=1):
             output_path = first_file_path.replace(extension,"") + "_" + str(inc) + output_ext
-            ffmpeg_vob_concat_string = ffmpeg_command + " -i '" + vob_path + "' " + transcode_string + " '" + output_path + "'"
+            ffmpeg_vob_concat_string = f"{ffmpeg_command} -i '{vob_path}' {transcode_string} '{output_path}'"
             run_command(ffmpeg_vob_concat_string)
-            inc += 1
 
 def ffmpeg_concatenate_VOBS(first_file_path, transcode_string, output_ext, ffmpeg_command):
-    catList = first_file_path + ".mylist.txt"
+    catList = f"{first_file_path}.mylist.txt"
     extension = os.path.splitext(first_file_path)[1]
     output_path = first_file_path.replace(extension,output_ext)
-    ffmpeg_vob_concat_string = ffmpeg_command + " -f concat -safe 0 -i '" + catList + "' -c copy '" + output_path + "'"
+    ffmpeg_vob_concat_string = f"{ffmpeg_command} -f concat -safe 0 -i '{catList}' -c copy '{output_path}'"
     run_command(ffmpeg_vob_concat_string)
     remove_cat_list(first_file_path)
 
 def run_command(command):
     try:
-        run = subprocess.call([command], shell=True)
-        return run
+        return subprocess.call([command], shell=True)
     except Exception as e:
         print(e)
         return e
 
 def remove_temp_files(input_dir):
-    for the_file in os.listdir(input_dir + ".VOBS"):
-        file_path = os.path.join(input_dir + ".VOBS", the_file)
+    for the_file in os.listdir(f"{input_dir}.VOBS"):
+        file_path = os.path.join(f"{input_dir}.VOBS", the_file)
         try:
             if os.path.isfile(file_path):
                 os.unlink(file_path)
             #elif os.path.isdir(file_path): shutil.rmtree(file_path)
         except Exception as e:
             print(e)
-    os.rmdir(input_dir + ".VOBS")
+    os.rmdir(f"{input_dir}.VOBS")
     remove_cat_list(input_dir)
 
 def remove_cat_list(input_file):
     try:
-        os.remove(input_file + ".mylist.txt")
+        os.remove(f"{input_file}.mylist.txt")
         print("Removing Cat List")
     except OSError:
         pass

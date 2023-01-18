@@ -150,14 +150,12 @@ def fileOrDir(inPath):
 #Process a single file
 def createMediaInfoDict(filePath, inType, proresFlag):
     media_info_text = getMediaInfo(filePath)
-    media_info_dict = parseMediaInfo(filePath, media_info_text, proresFlag)
-    return media_info_dict
+    return parseMediaInfo(filePath, media_info_text, proresFlag)
 
 #gets the Mediainfo text
 def getMediaInfo(filePath):
     cmd = [ '/usr/local/bin/mediainfo', '-f', '--Output=OLDXML', filePath ]
-    media_info = subprocess.Popen( cmd, stdout=subprocess.PIPE ).communicate()[0]
-    return media_info
+    return subprocess.Popen( cmd, stdout=subprocess.PIPE ).communicate()[0]
 
 #process mediainfo object into a dict
 def parseMediaInfo(filePath, media_info_text, proresFlag):
