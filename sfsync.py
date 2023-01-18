@@ -27,7 +27,7 @@ def getBarcode(dict):
     barcode = dict.get("Filename")[4:11] #get the barcode from the filename
     for b in barcode:
         if not b.isdigit(): #this makes sure that the barcode is 7 numbers. if not it'll throw a failure
-            print("ERROR: File Barcode Not Found for " + sourceBasename)
+            print(f"ERROR: File Barcode Not Found for {sourceBasename}")
         else:
             dict["Barcode"] = barcode
     return dict
@@ -35,8 +35,9 @@ def getBarcode(dict):
 
 
 def querySF(sf,barcode):
-    result = sf.query("SELECT Id FROM Preservation_Object__c WHERE Name = '" + barcode + "'")
-    return result
+    return sf.query(
+        f"SELECT Id FROM Preservation_Object__c WHERE Name = '{barcode}'"
+    )
 
 def initLog(sourceCSV):
     '''
@@ -53,11 +54,11 @@ def initLog(sourceCSV):
     '''
 
 def logNewLine(text,destination):
-    txtFile = open(destination + "/LoadingScript.log", "a+")
+    txtFile = open(f"{destination}/LoadingScript.log", "a+")
     txtFile.write("\n" + time.strftime("%Y-%m-%d_%H:%M:%S") + ": " + text)
 
 def logSameLine(text,destination):
-    txtFile = open(destination + "/LoadingScript.log", "a+")
+    txtFile = open(f"{destination}/LoadingScript.log", "a+")
     txtFile.write(text)
 
 def createDictList(inputArgs):
@@ -65,8 +66,7 @@ def createDictList(inputArgs):
     for c in inputArgs:
         with open(c, mode='r') as infile:
             reader = csv.DictReader(infile)
-            for line in reader:
-                dict_list.append(line)
+            dict_list.extend(iter(reader))
     return dict_list
 
 def processList(dict_list,sf):

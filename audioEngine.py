@@ -45,14 +45,16 @@ def main():
 
     #handling the input args. This is kind of a mess in this version
     if args.i is None:
-        print(bcolors.FAIL + "Please enter an input path!" + bcolors.ENDC)
+        print(f"{bcolors.FAIL}Please enter an input path!{bcolors.ENDC}")
         sys.exit()
     if args.o is None:
-        print(bcolors.OKBLUE +  "No output path defined, using default path" + bcolors.ENDC)
+        print(
+            f"{bcolors.OKBLUE}No output path defined, using default path{bcolors.ENDC}"
+        )
         out_path = ""
     else:
         out_path = args.o
-        print(bcolors.OKBLUE +  "User output path defined as " + out_path + bcolors.ENDC)
+        print(f"{bcolors.OKBLUE}User output path defined as {out_path}{bcolors.ENDC}")
 
 
     # This part can tell if we're processing a file or directory. Handles it accordingly
@@ -111,17 +113,19 @@ def main():
 
         # Rsync the File
         if args.r == True:
-            inPathList = []
-            inPathList.append(inPath)
+            inPathList = [inPath]
             moveToBackup(inPathList, processDict)
 
         # Make the mediainfo CSV (this is taken out for now, but maybe i'll put it back in later)
         quit()
 
 
-    # If we are processing an entire directory file
     elif inType == "D":
-        print(bcolors.OKBLUE + "Processing Input Directory: " + os.path.dirname(inPath) + "\n\n" + bcolors.ENDC)
+        print(
+            f"{bcolors.OKBLUE}Processing Input Directory: {os.path.dirname(inPath)}"
+            + "\n\n"
+            + bcolors.ENDC
+        )
 
         #Set path of output csv file (took this part out for now, but might put it back later)
         #if out_path == "":
@@ -191,8 +195,14 @@ def fileOrDir(inPath):
 #Process a single file
 def createMediaInfoDict(filePath, inType, processDict, sf):
     media_info_text = getMediaInfo(filePath)
-    media_info_dict = parseMediaInfo(filePath, media_info_text, processDict['hashType'], processDict['sidecar'], processDict['masterExtension'], sf)
-    return media_info_dict
+    return parseMediaInfo(
+        filePath,
+        media_info_text,
+        processDict['hashType'],
+        processDict['sidecar'],
+        processDict['masterExtension'],
+        sf,
+    )
 
 #gets the Mediainfo text
 def getMediaInfo(filePath):
@@ -204,21 +214,24 @@ def getMediaInfo(filePath):
 #process mediainfo object into a dict
 def parseMediaInfo(filePath, media_info_text, hashType, sidecar, masterExtension, sf):
     # The following line initializes the dict.
-    file_dict = {"Name" : "", \
-    "instantiationIdentifierDigital__c" : "", \
-    "essenceTrackDuration__c" : "", \
-    "instantiationFileSize__c" : "", \
-    "instantiationDigital__c" : "", \
-    "instantiationDataRateAudio__c" : "", \
-    "essenceTrackBitDepthAudio__c" : "", \
-    "essenceTrackSamplingRate__c" : "", \
-    "essenceTrackEncodingAudio__c" : "", \
-    "instantiationChannelConfigDigitalLayout__c" : "", \
-    "instantiationChannelConfigurationDigital__c" : "",
-    "messageDigest" : "", \
-    "messageDigestAlgorithm" : "", \
-    "audioMetaDict" : {}}
-    file_dict["instantiationIdentifierDigital__c"] = os.path.basename(filePath).split(".")[0]
+    file_dict = {
+        "Name": "",
+        "essenceTrackDuration__c": "",
+        "instantiationFileSize__c": "",
+        "instantiationDigital__c": "",
+        "instantiationDataRateAudio__c": "",
+        "essenceTrackBitDepthAudio__c": "",
+        "essenceTrackSamplingRate__c": "",
+        "essenceTrackEncodingAudio__c": "",
+        "instantiationChannelConfigDigitalLayout__c": "",
+        "instantiationChannelConfigurationDigital__c": "",
+        "messageDigest": "",
+        "messageDigestAlgorithm": "",
+        "audioMetaDict": {},
+        "instantiationIdentifierDigital__c": os.path.basename(filePath).split(
+            "."
+        )[0],
+    }
     barcodeTemp = file_dict["instantiationIdentifierDigital__c"]
     try:
         barcodeTemp = str(barcodeTemp).split("_")[0]
@@ -233,7 +246,12 @@ def parseMediaInfo(filePath, media_info_text, hashType, sidecar, masterExtension
         try:
             mi_Audio_Text = (media_info_text.split("<track type=\"Audio\" typeorder=\"1\">"))[1].split("</track>")[0]
         except:
-            print(bcolors.FAIL + "MEDIAINFO ERROR: Could not parse tracks for " + file_dict["instantiationIdentifierDigital__c"] + "\n\n" + bcolors.ENDC)
+            print(
+                f"{bcolors.FAIL}MEDIAINFO ERROR: Could not parse tracks for "
+                + file_dict["instantiationIdentifierDigital__c"]
+                + "\n\n"
+                + bcolors.ENDC
+            )
 
     file_dict = getAudioMetadata(file_dict, filePath, sf)
 
@@ -241,7 +259,12 @@ def parseMediaInfo(filePath, media_info_text, hashType, sidecar, masterExtension
     try:
         file_dict["essenceTrackDuration__c"] = (mi_General_Text.split("<Duration>"))[6].split("</Duration>")[0]
     except:
-        print(bcolors.FAIL + "MEDIAINFO ERROR: Could not parse Duration for " + file_dict["instantiationIdentifierDigital__c"] + "\n\n" + bcolors.ENDC)
+        print(
+            f"{bcolors.FAIL}MEDIAINFO ERROR: Could not parse Duration for "
+            + file_dict["instantiationIdentifierDigital__c"]
+            + "\n\n"
+            + bcolors.ENDC
+        )
 
     try:
         fileFormatTemp = (mi_General_Text.split("<Format>"))[1].split("</Format>")[0]
@@ -249,11 +272,21 @@ def parseMediaInfo(filePath, media_info_text, hashType, sidecar, masterExtension
             file_dict["instantiationDigital__c"] = "WAV"
 
     except:
-        print(bcolors.FAIL + "MEDIAINFO ERROR: Could not File Format for " + file_dict["instantiationIdentifierDigital__c"] + "\n\n" + bcolors.ENDC)
+        print(
+            f"{bcolors.FAIL}MEDIAINFO ERROR: Could not File Format for "
+            + file_dict["instantiationIdentifierDigital__c"]
+            + "\n\n"
+            + bcolors.ENDC
+        )
     try:
         file_dict["instantiationFileSize__c"] = (mi_General_Text.split("<File_size>"))[6].split("</File_size>")[0]
     except:
-        print(bcolors.FAIL + "MEDIAINFO ERROR: Could not parse File Size for " + file_dict["instantiationIdentifierDigital__c"] + "\n\n" + bcolors.ENDC)
+        print(
+            f"{bcolors.FAIL}MEDIAINFO ERROR: Could not parse File Size for "
+            + file_dict["instantiationIdentifierDigital__c"]
+            + "\n\n"
+            + bcolors.ENDC
+        )
 
 
     # Audio Stuff
@@ -263,16 +296,23 @@ def parseMediaInfo(filePath, media_info_text, hashType, sidecar, masterExtension
         try:
             file_dict["essenceTrackBitDepthAudio__c"] = (mi_Audio_Text.split("<Bit_depth>"))[1].split("</Bit_depth>")[0]
         except:
-            print(bcolors.FAIL + "MEDIAINFO ERROR: Could not parse Audio Bit Depth for " + file_dict["instantiationIdentifierDigital__c"] + "\n\n" + bcolors.ENDC)
+            print(
+                f"{bcolors.FAIL}MEDIAINFO ERROR: Could not parse Audio Bit Depth for "
+                + file_dict["instantiationIdentifierDigital__c"]
+                + "\n\n"
+                + bcolors.ENDC
+            )
     try:
         samplingRate = (mi_Audio_Text.split("<Sampling_rate>"))[1].split("</Sampling_rate>")[0]
-        if samplingRate == "44100":
-            samplingRate = "44.1"
-        else:
-            samplingRate = int(samplingRate)/1000
-        file_dict["essenceTrackSamplingRate__c"] = str(samplingRate) + " kHz"
+        samplingRate = "44.1" if samplingRate == "44100" else int(samplingRate)/1000
+        file_dict["essenceTrackSamplingRate__c"] = f"{str(samplingRate)} kHz"
     except:
-        print(bcolors.FAIL + "MEDIAINFO ERROR: Could not parse Audio Sampling Rate for " + file_dict["instantiationIdentifierDigital__c"] + "\n\n" + bcolors.ENDC)
+        print(
+            f"{bcolors.FAIL}MEDIAINFO ERROR: Could not parse Audio Sampling Rate for "
+            + file_dict["instantiationIdentifierDigital__c"]
+            + "\n\n"
+            + bcolors.ENDC
+        )
     try:
         file_dict["essenceTrackEncodingAudio__c"] = (mi_Audio_Text.split("<Codec>"))[1].split("</Codec>")[0]
         if file_dict["essenceTrackEncodingAudio__c"] == "PCM":
@@ -281,28 +321,48 @@ def parseMediaInfo(filePath, media_info_text, hashType, sidecar, masterExtension
         try:
             file_dict["essenceTrackEncodingAudio__c"] = (mi_Audio_Text.split("<Format>"))[1].split("</Format>")[0]
         except:
-            print(bcolors.FAIL + "MEDIAINFO ERROR: Could not parse Audio Track Encoding for " + file_dict["instantiationIdentifierDigital__c"] + "\n\n" + bcolors.ENDC)
+            print(
+                f"{bcolors.FAIL}MEDIAINFO ERROR: Could not parse Audio Track Encoding for "
+                + file_dict["instantiationIdentifierDigital__c"]
+                + "\n\n"
+                + bcolors.ENDC
+            )
     try:
         audioDataRate = (mi_Audio_Text.split("<Bit_rate>"))[1].split("</Bit_rate>")[0]
         audioDataRate = int(audioDataRate)/1000
-        file_dict["instantiationDataRateAudio__c"] = str(audioDataRate) + " Kbps"
+        file_dict["instantiationDataRateAudio__c"] = f"{str(audioDataRate)} Kbps"
     except:
         try:
             if file_dict["essenceTrackSamplingRate__c"] == "48 kHz" and file_dict["essenceTrackBitDepthAudio__c"] == "24":
                 file_dict["instantiationDataRateAudio__c"] = "2304 Kbps"
         except:
-            print(bcolors.FAIL + "MEDIAINFO ERROR: Could not parse Audio Data Rate for " + file_dict["instantiationIdentifierDigital__c"] + "\n\n" + bcolors.ENDC)
+            print(
+                f"{bcolors.FAIL}MEDIAINFO ERROR: Could not parse Audio Data Rate for "
+                + file_dict["instantiationIdentifierDigital__c"]
+                + "\n\n"
+                + bcolors.ENDC
+            )
     try:
         file_dict["instantiationChannelConfigurationDigital__c"] = (mi_Audio_Text.split("<Channel_s_>"))[2].split("</Channel_s_>")[0]
     except:
-        print(bcolors.FAIL + "MEDIAINFO ERROR: Could not parse Channel Configuration for " + file_dict["instantiationIdentifierDigital__c"] + "\n\n" + bcolors.ENDC)
+        print(
+            f"{bcolors.FAIL}MEDIAINFO ERROR: Could not parse Channel Configuration for "
+            + file_dict["instantiationIdentifierDigital__c"]
+            + "\n\n"
+            + bcolors.ENDC
+        )
     try:
         file_dict["instantiationChannelConfigDigitalLayout__c"] = (mi_Audio_Text.split("<ChannelLayout>"))[1].split("</ChannelLayout>")[0]
     except:
         if file_dict["instantiationChannelConfigurationDigital__c"] == "2 channels":
             file_dict["instantiationChannelConfigDigitalLayout__c"] = "L R"
         else:
-            print(bcolors.FAIL + "MEDIAINFO ERROR: Could not parse Channel Layout for " + file_dict["instantiationIdentifierDigital__c"] + "\n\n" + bcolors.ENDC)
+            print(
+                f"{bcolors.FAIL}MEDIAINFO ERROR: Could not parse Channel Layout for "
+                + file_dict["instantiationIdentifierDigital__c"]
+                + "\n\n"
+                + bcolors.ENDC
+            )
 
     #This is where we insert the BWAV metadata. tag value pairs are added the medainfo dict (so we don't need to add more dicts) then rmeoved later on in the script
     insertBWAV(file_dict, filePath)
@@ -316,12 +376,16 @@ def parseMediaInfo(filePath, media_info_text, hashType, sidecar, masterExtension
             file_dict["messageDigest"] = hashfile(filePath, hashType, blocksize=65536)
             file_dict["messageDigestAlgorithm"] = hashType
             if sidecar == 1:
-                sidecarPath = filePath + "." + hashType
-                f = open(sidecarPath,'w')
-                f.write(file_dict["messageDigest"])
-                f.close()
+                sidecarPath = f"{filePath}.{hashType}"
+                with open(sidecarPath,'w') as f:
+                    f.write(file_dict["messageDigest"])
     except:
-        print(bcolors.FAIL + "Error creating checksum for " + file_dict["instantiationIdentifierDigital__c"] + "\n\n" + bcolors.ENDC)
+        print(
+            f"{bcolors.FAIL}Error creating checksum for "
+            + file_dict["instantiationIdentifierDigital__c"]
+            + "\n\n"
+            + bcolors.ENDC
+        )
 
     return file_dict
 
@@ -352,7 +416,7 @@ def processVideo(inPath, processDict, sf):
 # Creates the string based off the inputs
 def createString(inPath, processDict):
 
-    ffmpeg_string = "/usr/local/bin/ffmpeg -hide_banner -loglevel panic -vsync 0 -i '" + inPath + "' "
+    ffmpeg_string = f"/usr/local/bin/ffmpeg -hide_banner -loglevel panic -vsync 0 -i '{inPath}' "
 
     for derivCount in range(len(processDict['derivDetails'])):
 
@@ -380,18 +444,17 @@ def createString(inPath, processDict):
         else:
             mp3kpbs = "0"
 
-        baseString = " -c:a libmp3lame -b:a " + mp3kpbs + " -write_xing 0 -ac 2 "
+        baseString = f" -c:a libmp3lame -b:a {mp3kpbs} -write_xing 0 -ac 2 "
         processDict['derivDetails'][derivCount]['outPath'] = inPath.replace(".wav","_access.mp3")
 
         ffmpeg_string = ffmpeg_string + baseString + audioFilterString + " -y '" + processDict['derivDetails'][derivCount]['outPath'] + "' "
 
-    cmd = ffmpeg_string
-    return cmd
+    return ffmpeg_string
 
 
 # Runs a command
 def runCommand(cmd):
-    print(bcolors.OKGREEN + "Running Command: " + cmd + "\n\n" + bcolors.ENDC)
+    print(f"{bcolors.OKGREEN}Running Command: {cmd}" + "\n\n" + bcolors.ENDC)
     ffmpeg_out = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True).communicate()[0]
     return
 
@@ -401,8 +464,11 @@ def moveToBackup(inPathList, processDict):
         print(bcolors.OKBLUE + "Moving to PresRAID!\n\n" + bcolors.ENDC)
         inPathList_String = ""
         for i in range(len(inPathList)):
-            inPathList_String = inPathList_String + "'" + inPathList[i] + "' "
-            rsync_command = "rsync -avv --progress " + inPathList_String + " /Volumes/presraid/" + processDict['presRaidFolderPath']
+            inPathList_String = f"{inPathList_String}'{inPathList[i]}' "
+            rsync_command = (
+                f"rsync -avv --progress {inPathList_String} /Volumes/presraid/"
+                + processDict['presRaidFolderPath']
+            )
 
         #runCommand(rsync_command)
         run_rsync(rsync_command)
@@ -418,8 +484,7 @@ def run_rsync(command):
             break
         if output:
             print(bcolors.OKGREEN + output.strip() + bcolors.ENDC)
-    rc = process.poll()
-    return rc
+    return process.poll()
 
 # Used to make colored text
 class bcolors:
@@ -433,23 +498,25 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 def querySF(sf,barcode):
-    result = sf.query("SELECT messageDigest__c, Audio_Metadata_Album__c, Audio_Metadata_Artist__c, Audio_Metadata_Date__c, Audio_Metadata_Description__c, Audio_Metadata_Title__c, captureHardwareName__c, videoReproducingDevice__c FROM Preservation_Object__c WHERE Name = '" + barcode + "'")
-    return result
+    return sf.query(
+        f"SELECT messageDigest__c, Audio_Metadata_Album__c, Audio_Metadata_Artist__c, Audio_Metadata_Date__c, Audio_Metadata_Description__c, Audio_Metadata_Title__c, captureHardwareName__c, videoReproducingDevice__c FROM Preservation_Object__c WHERE Name = '{barcode}'"
+    )
 
 def querySF_Inventory(sf,ID):
-    result = sf.query("SELECT Name FROM Inventory__c WHERE Id = '" + ID + "'")
-    return result
+    return sf.query(f"SELECT Name FROM Inventory__c WHERE Id = '{ID}'")
 
 def getSFDataFromRecord(sf, sfData, barcode):
-    sfDataDict = {"audioMD_Album" : "", \
-    "audioMD_Artist" : "", \
-    "audioMD_Date" : "", \
-    "audioMD_Description" : "", \
-    "audioMD_CaptureDeck" : "", \
-    "audioMD_CaptureHardware" : "", \
-    "audioMD_Title" : ""}
+    sfDataDict = {
+        "audioMD_Album": "",
+        "audioMD_Artist": "",
+        "audioMD_Date": "",
+        "audioMD_Description": "",
+        "audioMD_CaptureDeck": "",
+        "audioMD_CaptureHardware": "",
+        "audioMD_Title": "",
+        'audioMD_Album': sfData["records"][0].get("Audio_Metadata_Album__c"),
+    }
 
-    sfDataDict['audioMD_Album'] = sfData["records"][0].get("Audio_Metadata_Album__c")
     sfDataDict['audioMD_Artist'] = sfData["records"][0].get("Audio_Metadata_Artist__c")
     sfDataDict['audioMD_Date'] = sfData["records"][0].get("Audio_Metadata_Date__c")
     sfDataDict['audioMD_Description'] = sfData["records"][0].get("Audio_Metadata_Description__c")
@@ -459,36 +526,65 @@ def getSFDataFromRecord(sf, sfData, barcode):
     sfDeckData = querySF_Inventory(sf,sfDataDict['audioMD_CaptureDeck'])
     sfDataDict['audioMD_CaptureDeck'] = sfDeckData["records"][0].get("Name")
 
-    if sfDataDict['audioMD_Title'] == None:
-        print(bcolors.FAIL + "ERROR: No Title Metadata Entered for Record: " + barcode + ". Quitting Script Now\n\n" + bcolors.ENDC)
-    elif sfDataDict['audioMD_Artist'] == None:
-        print(bcolors.FAIL + "ERROR: No Artist Metadata Entered for Record: " + barcode + ". Quitting Script Now\n\n" + bcolors.ENDC)
-    elif sfDataDict['audioMD_Album'] == None:
-        print(bcolors.FAIL + "ERROR: No Album Metadata Entered for Record: " + barcode + ". Quitting Script Now\n\n" + bcolors.ENDC)
-    elif sfDataDict['audioMD_Date'] == None:
-        print(bcolors.FAIL + "ERROR: No Date Metadata Entered for Record: " + barcode + ". Quitting Script Now\n\n" + bcolors.ENDC)
-    elif sfDataDict['audioMD_Description'] == None:
-        print(bcolors.FAIL + "ERROR: No Description Metadata Entered for Record: " + barcode + ". Quitting Script Now\n\n" + bcolors.ENDC)
-    elif sfDataDict['audioMD_CaptureDeck'] == None:
-        print(bcolors.FAIL + "ERROR: No Capture Deck Metadata Entered for Record: " + barcode + ". Quitting Script Now\n\n" + bcolors.ENDC)
-    elif sfDataDict['audioMD_CaptureHardware'] == None:
-        print(bcolors.FAIL + "ERROR: No Capture Hardware Metadata Entered for Record: " + barcode + ". Quitting Script Now\n\n" + bcolors.ENDC)
+    if sfDataDict['audioMD_Title'] is None:
+        print(
+            f"{bcolors.FAIL}ERROR: No Title Metadata Entered for Record: {barcode}"
+            + ". Quitting Script Now\n\n"
+            + bcolors.ENDC
+        )
+    elif sfDataDict['audioMD_Artist'] is None:
+        print(
+            f"{bcolors.FAIL}ERROR: No Artist Metadata Entered for Record: {barcode}"
+            + ". Quitting Script Now\n\n"
+            + bcolors.ENDC
+        )
+    elif sfDataDict['audioMD_Album'] is None:
+        print(
+            f"{bcolors.FAIL}ERROR: No Album Metadata Entered for Record: {barcode}"
+            + ". Quitting Script Now\n\n"
+            + bcolors.ENDC
+        )
+    elif sfDataDict['audioMD_Date'] is None:
+        print(
+            f"{bcolors.FAIL}ERROR: No Date Metadata Entered for Record: {barcode}"
+            + ". Quitting Script Now\n\n"
+            + bcolors.ENDC
+        )
+    elif sfDataDict['audioMD_Description'] is None:
+        print(
+            f"{bcolors.FAIL}ERROR: No Description Metadata Entered for Record: {barcode}"
+            + ". Quitting Script Now\n\n"
+            + bcolors.ENDC
+        )
+    elif sfDataDict['audioMD_CaptureDeck'] is None:
+        print(
+            f"{bcolors.FAIL}ERROR: No Capture Deck Metadata Entered for Record: {barcode}"
+            + ". Quitting Script Now\n\n"
+            + bcolors.ENDC
+        )
+    elif sfDataDict['audioMD_CaptureHardware'] is None:
+        print(
+            f"{bcolors.FAIL}ERROR: No Capture Hardware Metadata Entered for Record: {barcode}"
+            + ". Quitting Script Now\n\n"
+            + bcolors.ENDC
+        )
 
     return sfDataDict
 
 # Get audio metadata from user
 def getAudioMetadata(file_dict, filePath, sf):
-    audioMetaDict = {}
     sfDataDict = {}
     filename = os.path.basename(filePath)
 
     sfData = querySF(sf,file_dict["Name"])
     sfDataDict = getSFDataFromRecord(sf, sfData, file_dict["Name"])
 
-    audioMetaDict['title'] = sfDataDict['audioMD_Title']
-    audioMetaDict['fullDate'] = sfDataDict['audioMD_Date']
-    audioMetaDict['creationDate'] = "1969-04-20"
-    audioMetaDict['artistName'] = sfDataDict['audioMD_Artist']
+    audioMetaDict = {
+        'title': sfDataDict['audioMD_Title'],
+        'fullDate': sfDataDict['audioMD_Date'],
+        'creationDate': "1969-04-20",
+        'artistName': sfDataDict['audioMD_Artist'],
+    }
     audioMetaDict['yearDate'] = audioMetaDict['fullDate'][:4]
     audioMetaDict['description'] = sfDataDict['audioMD_Description']
     audioMetaDict['album'] = sfDataDict['audioMD_Album']
@@ -538,9 +634,9 @@ def insertBWAV(file_dict, filePath):
 #   Pads blank space at end of coding history if the length is odd to make sure there is an even number of characters.
     codeHistLen = len(bwavCodingHistory)
     if codeHistLen % 2 != 0:
-        bwavCodingHistory = bwavCodingHistory + " "
+        bwavCodingHistory = f"{bwavCodingHistory} "
 
-    bwfString = "bwfmetaedit --accept-nopadding --specialchars --Description='" + bwavDescription + "' --Originator='" + bwavOriginator + "' --OriginationDate='" + bwavOriginationDate + "' --OriginatorReference='" + bwavOriginatorReference + "' --UMID='" + bwavUMID + "' --History='" + bwavCodingHistory + "' '" + filePath + "'"
+    bwfString = f"bwfmetaedit --accept-nopadding --specialchars --Description='{bwavDescription}' --Originator='{bwavOriginator}' --OriginationDate='{bwavOriginationDate}' --OriginatorReference='{bwavOriginatorReference}' --UMID='{bwavUMID}' --History='{bwavCodingHistory}' '{filePath}'"
     runCommand(bwfString)
 
 # Inserting ID3 metadata in master audio files
@@ -552,7 +648,7 @@ def insertID3(file_dict, filePath):
     id3Comment = file_dict['audioMetaDict']['description']
     id3Album = file_dict['audioMetaDict']['album']
 
-    id3String = "id3v2 -a '" + id3Artist + "' -t '" + id3Title + "' -A '" + id3Album +  "' -c '" + id3Comment + "' -y '" + id3Year + "' '" + filePath + "'"
+    id3String = f"id3v2 -a '{id3Artist}' -t '{id3Title}' -A '{id3Album}' -c '{id3Comment}' -y '{id3Year}' '{filePath}'"
     runCommand(id3String)
 
 # Used for seeing if a string represents an integer
@@ -567,10 +663,14 @@ def RepresentsInt(s):
 # Creates the dict that holds all of the processing information
 def createProcessDict(processDict):
     #Get number of derivatives with error catching
-    userChoiceNum = input(bcolors.OKBLUE + "Please enter how many Derivatives will you be making: " + bcolors.ENDC)
+    userChoiceNum = input(
+        f"{bcolors.OKBLUE}Please enter how many Derivatives will you be making: {bcolors.ENDC}"
+    )
     while not RepresentsInt(userChoiceNum):
         print(bcolors.FAIL + "\nIncorrect Input! Please enter a number\n" + bcolors.ENDC)
-        userChoiceNum = input(bcolors.OKBLUE + "Please enter how many Derivatives will you be making: " + bcolors.ENDC)
+        userChoiceNum = input(
+            f"{bcolors.OKBLUE}Please enter how many Derivatives will you be making: {bcolors.ENDC}"
+        )
     processDict['numDerivs'] = int(userChoiceNum)
 
     derivList = []
@@ -580,16 +680,16 @@ def createProcessDict(processDict):
         processDict['derivDetails'] = "NoDerivs"
 
     for derivCount in range (1, (processDict.get('numDerivs') + 1)):
-        derivDetails = {}
-        #initialize variable
-        derivDetails['mp3Kbps'] = 0
-        derivDetails['wavDerivDetails'] = 0
         #Get derivative types with error catching
         userChoiceType = input(bcolors.OKBLUE + "\nWhich Codec Do You Want Derivatives " + str(derivCount) + " To Be?\n[1] MP3\n[2] WAV\n\n" + bcolors.ENDC)
         while userChoiceType not in ("1","2"):
             print(bcolors.FAIL + "\nIncorrect Input! Please Select from one of the following options!" + bcolors.ENDC)
             userChoiceType = input(bcolors.OKBLUE + "\n[1] MP3\n[2] WAV\n\n" + bcolors.ENDC)
-        derivDetails['derivType'] = int(userChoiceType)
+        derivDetails = {
+            'mp3Kbps': 0,
+            'wavDerivDetails': 0,
+            'derivType': int(userChoiceType),
+        }
         #Get derivative details with error catching
         if derivDetails['derivType'] == 1:
             userChoiceKbps= input(bcolors.OKGREEN + "\nHow many kpbs would you like to make your MP3 " + str(derivCount) + "?\n[1] 320\n[2] 240\n[3] 160\n[4] 128\n\n" + bcolors.ENDC)
@@ -616,14 +716,6 @@ def createProcessDict(processDict):
         derivList.append(derivDetails)
         processDict['derivDetails'] = derivList
 
-    #PresRAID options
-    #userChoiceRAID = input(bcolors.OKBLUE + "\nDo you want to move the file to the PresRAID?\n[1] Yes \n[2] No\n\n" + bcolors.ENDC)
-    #while userChoiceRAID not in ("1","2"):
-    #    print(bcolors.FAIL + "\nIncorrect Input! Please Select from one of the following options!" + bcolors.ENDC)
-    #    userChoiceRAID = input(bcolors.OKBLUE + "\n[1] Yes \n[2] No\n\n" + bcolors.ENDC)
-    #processDict['moveToPresRAID'] = int(userChoiceRAID)
-    #if processDict['moveToPresRAID'] == 1:
-        #Make sure PresRaid path exists
     #    processDict['presRaidFolderPath'] = str(input(bcolors.OKGREEN + "\nPlease Enter the Folder in the PresRAID you want to move these files to\n\n" + bcolors.ENDC))
     #    while not os.path.isdir("/Volumes/presraid/" + processDict['presRaidFolderPath']):
     #        print(bcolors.FAIL + "\nFolder path does not exist! Please try again!" + bcolors.ENDC)
@@ -637,7 +729,7 @@ def createProcessDict(processDict):
         print(bcolors.FAIL + "\nIncorrect Input! Please Select from one of the following options!" + bcolors.ENDC)
         userChoiceHash = input(bcolors.OKBLUE + "\n[1] Yes \n[2] Yes + Sidecar\n[3] No\n\n" + bcolors.ENDC)
     createHash = int(userChoiceHash)
-    if createHash == 1 or createHash == 2:
+    if createHash in {1, 2}:
         processDict['sidecar'] = createHash - 1 #Create sidecar will be 0 if no sidecar, 1 if yes sidecar
         userChoiceHashType = input(bcolors.OKGREEN + "\nWhich type of hash would you like to create?\n[1] MD5 \n[2] SHA1 \n[3] SHA256\n\n" + bcolors.ENDC)
         while userChoiceHashType not in ("1","2","3"):
